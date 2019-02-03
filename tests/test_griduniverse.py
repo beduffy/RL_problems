@@ -175,6 +175,131 @@ class TestGridUniverse(unittest.TestCase):
 
         self.assertTrue(reward == -10 and done)
 
+    def test_lemons_melons_apples(self):
+        """
+        Test whether correct cumulative reward is received for collecting certain number of melons, lemons and apples.
+        In places where there are no fruit, we lose -1 immediate reward (self.MOVEMENT_REWARD)
+        """
+
+        env = GridUniverseEnv(custom_world_fp='../core/envs/maze_text_files/melons_lemons_apples_env.txt')
+        actions_to_take = [env.action_descriptor_to_int[action_desc] for action_desc in
+                           ['RIGHT', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT',
+                            'DOWN', 'LEFT', 'LEFT', 'DOWN', 'RIGHT', 'RIGHT']]
+
+        num_lemons = num_apples = num_melons = 3
+        expected_total_reward = num_apples * env.APPLE_REWARD + num_lemons * env.LEMON_REWARD + \
+                                num_melons * env.MELON_REWARD + len(actions_to_take) * env.MOVEMENT_REWARD  # -1 for immediate reward
+        cumulative_reward = 0
+
+        for step_no, action in enumerate(actions_to_take):
+            env.render()
+            print('go ' + env.action_descriptors[action])
+            observation, reward, done, info = env.step(action)
+            cumulative_reward += reward
+
+        print(cumulative_reward, expected_total_reward)
+        self.assertTrue(cumulative_reward == expected_total_reward)
+
+    def test_object_duplicates_raise_exceptions(self):
+        """
+        If any of the specific objects/entities have duplicates make sure an exception is raised
+        """
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(lemons=[5, 5])
+
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(melons=[5, 5])
+
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(apples=[5, 5])
+
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(walls=[5, 5])
+
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(initial_state=[5, 5])
+
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(lava_states=[5, 5])
+
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(goal_states=[5, 5])
+
+    def test_different_object_collisions_raise_exceptions(self):
+        """
+        Check if specific object combinations collide i.e. two objects in the same state index.
+        There are probably more to add since it's 2^n with n being the amount of objects.
+        But these are the most important.
+
+        Current not testing (and no need to test (allow these situations to be the mistake of the user))
+        these collisions:
+
+        initial_state <-> lava (ok since the user will see what his mistake was)
+        initial_state <-> goal_state
+        """
+
+        # Check if starting state is within a wall
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(initial_state=5, walls=[5])
+
+        # check if goal state is within a wall
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(goal_states=[5], walls=[5])
+
+        # check if lava state is within a wall
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(lava_states=[5], walls=[5])
+
+        # check if any fruit has been placed on wall
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(melons=[5], walls=[5])
+
+        # Check if fruit collides with another fruit
+        with self.assertRaises(ValueError):
+            env = GridUniverseEnv(apples=[5], lemons=[5])
+
+    def test_fruit_disappears(self):
+        """
+        Test that if you collect fruit, it disappears. Apples in this case
+        """
+
+        env = GridUniverseEnv(apples=[1])
+
+        env.render()
+        action = env.action_descriptor_to_int['RIGHT']
+        observation, reward1, done, info = env.step(action)
+
+        env.render()
+        action = env.action_descriptor_to_int['LEFT']
+        observation, reward2, done, info = env.step(action)
+
+        env.render()
+        action = env.action_descriptor_to_int['RIGHT']
+        observation, reward3, done, info = env.step(action)
+        env.render()
+
+        self.assertTrue(reward1 == (env.APPLE_REWARD + env.MOVEMENT_REWARD) and reward3 != (env.APPLE_REWARD + env.MOVEMENT_REWARD))
+
+    def test_fruit_reset(self):
+        """
+        Test that after collecting fruit and the environment is reset, fruit reappears
+        and that you still get same reward. Melon in this case
+        """
+
+        env = GridUniverseEnv(melons=[1])
+
+        env.render()
+        action = env.action_descriptor_to_int['RIGHT']
+        observation, reward1, done, info = env.step(action)
+        env.render()
+
+        print('Resetting environment')
+        env.reset()
+        env.render()
+        observation, reward2, done, info = env.step(action)
+        env.render()
+
+        self.assertTrue(reward1 == reward2 and reward1 == (env.MELON_REWARD + env.MOVEMENT_REWARD))
 
 if __name__ == '__main__':
     unittest.main()

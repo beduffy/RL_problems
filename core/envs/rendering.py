@@ -69,6 +69,13 @@ class Viewer(object):
         self.terminal_goal_img = pyglet.resource.image('wbs_texture_05_resized_green.jpg')
         self.terminal_lava_img = pyglet.resource.image('lava-resized.jpg')
         self.wall_img = pyglet.resource.image('wbs_texture_05_resized_wall.jpg')
+        # self.apple_img = pyglet.resource.image('apple-01-resized.png')
+        # self.apple_img = pyglet.resource.image('apple_cartoon.png')
+        self.apple_img = pyglet.resource.image('apple_beautiful.png')
+        # self.lemon_img = pyglet.resource.image('lemon-resized.png')
+        self.lemon_img = pyglet.resource.image('lemon_cartoon.png')
+        # self.melon_img = pyglet.resource.image('melon-resized.png')
+        self.melon_img = pyglet.resource.image('melon_cartoon.png')
 
         self.padding = 1
         self.tile_dim = self.ground_img.width + self.padding
@@ -77,6 +84,9 @@ class Viewer(object):
         self.terminal_goal_sprites = []
         self.terminal_lava_sprites = []
         self.ground_sprites = []
+        self.apple_sprites = []
+        self.lemon_sprites = []
+        self.melon_sprites = []
 
         self.batch = pyglet.graphics.Batch()
         background = pyglet.graphics.OrderedGroup(0)
@@ -116,7 +126,7 @@ class Viewer(object):
             self.font_size = 50
 
         # have to flip pixel location. top-left is initial state = x, y = 0, 0 = state 0
-        self.pix_grid_height = (self.env.y_max) * self.tile_dim + (self.num_extra_tiles // 2) * self.tile_dim
+        self.pix_grid_height = self.env.y_max * self.tile_dim + (self.num_extra_tiles // 2) * self.tile_dim
 
         for i, (x, y) in enumerate(self.env.world):
             x_pix_loc, y_pix_loc = self.get_x_y_pix_location(x, y)
@@ -133,6 +143,21 @@ class Viewer(object):
             else:
                 self.ground_sprites.append(
                     pyglet.sprite.Sprite(self.ground_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
+
+        for a_state in self.env.current_apples:
+            x, y = self.env.world[a_state][0], self.env.world[a_state][1]
+            x_pix_loc, y_pix_loc = self.get_x_y_pix_location(x, y)
+            self.apple_sprites.append(pyglet.sprite.Sprite(self.apple_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
+
+        for l_state in self.env.current_lemons:
+            x, y = self.env.world[l_state][0], self.env.world[l_state][1]
+            x_pix_loc, y_pix_loc = self.get_x_y_pix_location(x, y)
+            self.lemon_sprites.append(pyglet.sprite.Sprite(self.lemon_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
+
+        for m_state in self.env.current_melons:
+            x, y = self.env.world[m_state][0], self.env.world[m_state][1]
+            x_pix_loc, y_pix_loc = self.get_x_y_pix_location(x, y)
+            self.melon_sprites.append(pyglet.sprite.Sprite(self.melon_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
 
         glViewport(0, 0, width, height)
 

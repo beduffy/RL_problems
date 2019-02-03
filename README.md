@@ -30,9 +30,9 @@ This environment defines a bidimensional grid representing the world as a discre
 - [x] “Classic” pathfinding/graph search algorithms to compare against RL algorithms.
 - [x] ASCII and OpenGL based rendering (using pyglet)
 - [x] An easy interface to create and store levels in text files
+- [x] 3 different “fruits” that can be collected. Objects that can provide positive and negative rewards in varying amounts. 
 
 Additionally, we plan to include the following features:
-- [ ] 3 different “fruits” that can be collected. Objects that can provide positive and negative rewards in varying amounts. 
 - [ ] Levers and keys. Elements that modify the environment by removing particular walls/doors.
 - [ ] Wind
 - [ ] Human control of the agent
@@ -66,7 +66,22 @@ To run random agents on different variations of the environment (with different 
 
 `python examples/griduniverse_env_examples.py`
 
-The `run_default_griduniverse()` function in the above file shows the simplest way to use the environment.  
+The `run_default_griduniverse()` function in the above file is shown below and is the easiest way to see how use the environment.
+```
+env = GridUniverseEnv()
+    for i_episode in range(1):
+        observation = env.reset()
+        for t in range(100):
+            env.render()  # set mode='graphic for pyglet render
+            action = env.action_space.sample()
+            print('go ' + env.action_descriptors[action])
+            observation, reward, done, info = env.step(action)
+
+            if done:
+                print("Episode finished after {} timesteps".format(t + 1))
+                break
+```
+
 
 For much more detailed info on how to use the environment, check the [GridUniverse Documentation](https://github.com/beduffy/RL_problems/tree/master/docs/GridUniverse.md)
 
