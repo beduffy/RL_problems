@@ -1,0 +1,11 @@
+xoooooooooooo#ooooooo#ooooo#ooooo
+ooooooooooooo#ooooooo#ooooo#ooooo
+ooooooooooooo#ooooooo#ooooo#ooooo
+ooooooooooooo#ooooooo#ooooo#ooooo
+ooooooooooooo#ooooooo#ooooo#ooooo
+######ooooooo#ooooooo#ooooo#ooooo
+ooooo#ooooooo#ooooooo#ooooo#ooooo
+##ooo#ooooooo#ooooooo#ooooo#ooooo
+G#ooo#ooooooooooooooo#ooooooooooo
+-----
+{14: 21, 26: 165, 32: 265}

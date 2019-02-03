@@ -40,8 +40,8 @@ def get_policy_map(policy, world_shape, mode='human'):
         # match actions to unicode values of the arrows to be displayed
         for action in optimal_actions:
             policy_arrows_map[state] = np.core.defchararray.add(policy_arrows_map[state], unicode_arrows[action])
-    policy_probabilities = np.fromiter((policy[state] for state in np.nditer(np.arange(policy.shape[0]))),
-                                       dtype='float64, float64, float64, float64')
+    policy_probabilities = np.empty(policy.shape[0], dtype=np.object)
+    policy_probabilities[:] = [policy[state] for state in np.nditer(np.arange(policy.shape[0]))]
     outfile = StringIO() if mode == 'ansi' else sys.stdout
     for row in reshape_as_griduniverse(policy_arrows_map, world_shape):
         for state in row:

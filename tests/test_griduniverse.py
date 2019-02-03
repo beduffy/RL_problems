@@ -1,9 +1,62 @@
+import time
+import sys
 import unittest
+import os
 
 from core.envs.griduniverse_env import GridUniverseEnv
 
-
 class TestGridUniverse(unittest.TestCase):
+    def test_lever_parameter_raise_correct_exceptions(self):
+        """
+        Test the numerous ways in which levers should raise exceptions
+        """
+        # Check if crashes if not a dictionary
+        with self.assertRaises(TypeError):
+            GridUniverseEnv(levers=[5, 3])
+
+        # Need walls for levers
+        with self.assertRaises(ValueError):
+            GridUniverseEnv(levers={5: 3})
+
+        # Wall (3) linked to lever state (5) is not a wall state
+        with self.assertRaises(ValueError):
+            GridUniverseEnv(walls=[4], levers={5: 3})
+
+        # How it should work
+        try:
+            GridUniverseEnv(walls=[3], levers={5: 3})
+        except:
+            self.fail("Should not crash here. Wall state 3 is the value of lever state 5. ")
+
+        # Lever state can not be placed on top of a wall
+        with self.assertRaises(ValueError):
+            GridUniverseEnv(walls=[4, 8], levers={4: 8})
+
+        # non-int key
+        with self.assertRaises(TypeError):
+            GridUniverseEnv(walls=[4, 8], levers={'a': 8})
+
+    def test_lever_opens_door_and_both_reset_on_reset(self):
+        """
+        Create default environment, test that wall exists, move to lever, check wall doesn't exist
+        reset environment, check that lever is unactivated, and repeat do previous steps
+        """
+        env = GridUniverseEnv(walls=[3], levers={1: 3})
+
+        self.assertTrue(env.wall_grid[3] == 1 and 3 in env.wall_indices)
+        env.step(env.action_descriptor_to_int['RIGHT'])
+        self.assertTrue(env.wall_grid[3] == 0 and 3 not in env.wall_indices)
+        self.assertTrue(1 not in env.unactivated_levers)
+
+        env.reset()
+        self.assertTrue(1 in env.unactivated_levers)
+
+        self.assertTrue(env.wall_grid[3] == 1 and 3 in env.wall_indices)
+        env.step(env.action_descriptor_to_int['RIGHT'])
+        self.assertTrue(env.wall_grid[3] == 0 and 3 not in env.wall_indices)
+
+        self.assertTrue(1 not in env.unactivated_levers)
+
     def test_terminal_out_of_bounds_error(self):
         """
         Default Env contains 16 states (0-15) so state 16 should crash environment.
@@ -58,7 +111,7 @@ class TestGridUniverse(unittest.TestCase):
         print('go ' + env.action_descriptors[action])
 
         env.render()
-        self.assertTrue(observation == 0) # check if in same place
+        self.assertTrue(observation == 0) # check if in same starting place
 
     def test_default_griduniverse_completion_in_six_steps(self):
         """
@@ -103,7 +156,7 @@ class TestGridUniverse(unittest.TestCase):
         Test whether we can complete the GridUniverse created from the text file within
         """
 
-        env = GridUniverseEnv(custom_world_fp='../core/envs/maze_text_files/test_env.txt')
+        env = GridUniverseEnv(textworld_fp='../core/envs/textworld_map_files/test_env.txt')
         actions_to_take = [2, 2, 2, 2, 2, 2, 2, 1]
         for step_no, action in enumerate(actions_to_take):
             env.render()
@@ -114,9 +167,83 @@ class TestGridUniverse(unittest.TestCase):
 
         self.assertTrue((step_no + 1) == len(actions_to_take) and done)
 
+    def test_lever_textworld_created_from_text_file_with_wrong_and_right_lever_metadata(self):
+        """
+        Test whether we can complete this griduniverse created from a text file
+        within textworld_map_files folder. This level contains levers so it also tests that the
+        functionality of levers works correctly. If anything changes anywhere, this test will fail.
+        """
+
+        env = GridUniverseEnv(textworld_fp='../core/envs/textworld_map_files/lever_level_2.txt')
+        env.render()
+
+        # Very particular path to take for agent to go to each lever and finally get to terminal state
+        actions_to_take = [env.action_descriptor_to_int['DOWN']] + [env.action_descriptor_to_int['RIGHT']] * 6 + \
+                          [env.action_descriptor_to_int['LEFT']] * 5 + [env.action_descriptor_to_int['DOWN']] * 5 + \
+                          [env.action_descriptor_to_int['RIGHT']] * 3 + [env.action_descriptor_to_int['UP']] * 2 + \
+                          [env.action_descriptor_to_int['RIGHT']] * 2 + [env.action_descriptor_to_int['LEFT']] * 2 + \
+                          [env.action_descriptor_to_int['DOWN']] * 2 + [env.action_descriptor_to_int['RIGHT']] * 2
+
+        for step_no, action in enumerate(actions_to_take):
+            # env.render()  # set mode='graphic' for pyglet render
+            observation, reward, done, info = env.step(action)
+
+            if done:
+                print("Episode finished after {} timesteps".format(step_no + 1))
+                break
+
+        self.assertTrue((step_no + 1) == len(actions_to_take) and done)
+
+    def test_lever_textworld_breaks_from_reading_wrong_lever_metadata_from_text_file(self):
+        """
+        Creates temporary file with correct map/grid text but wrong lever metadata (broken python dictionary in text) e.g. "{5: {"
+        Final case tests empty dictionary which should not crash.
+        """
+
+        file_path = '../core/envs/textworld_map_files/test_text_file_with_broken_metadata.txt'
+
+        # Test wrong format of metadata (list) breaks loading
+        with self.assertRaises(TypeError):
+            with open(file_path, 'w') as file:
+                file.write('oooo\n')
+                file.write('oooo\n')
+                file.write('oooo\n')
+                file.write('oooG\n')
+                file.write('----\n')
+                file.write('[5]')
+            env = GridUniverseEnv(textworld_fp=file_path)
+
+        # Test totally broken syntax
+        with self.assertRaises(TypeError):
+            with open(file_path, 'w') as file:
+                file.write('oooo\n')
+                file.write('oooo\n')
+                file.write('oooo\n')
+                file.write('oooG\n')
+                file.write('----\n')
+                file.write('----\n')
+                file.write('{5: {')
+            env = GridUniverseEnv(textworld_fp=file_path)
+
+        # How it should work but empty dictionary. So no crash expected.
+        try:
+            with open(file_path, 'w') as file:
+                file.write('oooo\n')
+                file.write('oooo\n')
+                file.write('oooo\n')
+                file.write('oooG\n')
+                file.write('----\n')
+                file.write('{}')
+            env = GridUniverseEnv(textworld_fp=file_path)
+        except:
+            self.fail("Should not crash here. Correct map file.")
+
+        # Remove file. Leaving it there would only confuse and clutter.
+        os.remove(file_path)
+
     def test_each_boundary_within_default_env(self):
         """
-        The agent follows a sequence of steps to check each boundary acts as expected (the current
+        On default env, the agent follows a sequence of steps to check each boundary acts as expected (the current
         observation should be the same as the previous if you move into a boundary).
         The agent tries the top-left, top-right and bottom-right corners while avoiding the Terminal state.
         The step numbers where the agent ends up in the same state as previously
@@ -164,7 +291,7 @@ class TestGridUniverse(unittest.TestCase):
         Test whether we can end the episode by making the agent travel into lava in environment created from text file
         """
 
-        env = GridUniverseEnv(custom_world_fp='../core/envs/maze_text_files/test_env.txt')
+        env = GridUniverseEnv(textworld_fp='../core/envs/textworld_map_files/test_env.txt')
         actions_to_take = [env.action_descriptor_to_int[action_desc] for action_desc in ['DOWN', 'DOWN', 'DOWN', 'RIGHT', 'RIGHT']]
         for step_no, action in enumerate(actions_to_take):
             env.render()

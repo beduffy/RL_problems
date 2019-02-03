@@ -30,10 +30,10 @@ This environment defines a bidimensional grid representing the world as a discre
 - [x] “Classic” pathfinding/graph search algorithms to compare against RL algorithms.
 - [x] ASCII and OpenGL based rendering (using pyglet)
 - [x] An easy interface to create and store levels in text files
+- [x] Levers and keys. Elements that modify the environment by removing particular walls/doors.
 
 Additionally, we plan to include the following features:
 - [ ] 3 different “fruits” that can be collected. Objects that can provide positive and negative rewards in varying amounts. 
-- [ ] Levers and keys. Elements that modify the environment by removing particular walls/doors.
 - [ ] Wind
 - [ ] Human control of the agent
 - [ ] Different sensor configurations for the agent so it can be defined whether the agent field of view is constrained to the current state, surrounding states or the complete grid.

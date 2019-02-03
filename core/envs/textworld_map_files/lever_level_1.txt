@@ -1,0 +1,9 @@
+xoooooo
+ooooooo
+ooooooo
+ooooooo
+ooooooo
+ooooo##
+ooooo#G
+-----------
+{42: 47}

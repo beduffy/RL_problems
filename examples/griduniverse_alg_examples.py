@@ -11,7 +11,7 @@ import core.algorithms.dynamic_programming as dp
 def run_policy_and_value_iteration():
     """
     Majority of code is within utils.py and dynamic_programming.py for this function
-    This function does 4 things:
+    This function does 5 things:
 
     1. Evaluate the value function of a random policy a number of times
     2. Create a greedy policy created from from this value function
@@ -24,7 +24,7 @@ def run_policy_and_value_iteration():
     # 1. Evaluate the value function of a random policy a number of times
     world_shape = (4, 4)
     # env = GridUniverseEnv(grid_shape=world_shape, goal_states=[3, 12]) # Sutton and Barlo/David Silver example
-    # specific case with lava and path true it
+    # specific case with lava and path through it
     # env = GridUniverseEnv(grid_shape=world_shape, lava_states=[i for i in range(15) if i not in [0, 4, 8, 12, 13, 14, 15]])
     world_shape = (11, 11)
     env = GridUniverseEnv(grid_shape=world_shape, random_maze=True)
@@ -123,7 +123,7 @@ def run_monte_carlo_evaluation():
         curr_state, reward, done, info = env.step(action)
 
         if done:
-            print('Terminal state found in {} steps'.format(t + 1))
+            print('Terminal state reached in {} steps'.format(t + 1))
             env.render(mode='graphic')
             time.sleep(5)
             break

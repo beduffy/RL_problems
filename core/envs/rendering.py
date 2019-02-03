@@ -69,6 +69,9 @@ class Viewer(object):
         self.terminal_goal_img = pyglet.resource.image('wbs_texture_05_resized_green.jpg')
         self.terminal_lava_img = pyglet.resource.image('lava-resized.jpg')
         self.wall_img = pyglet.resource.image('wbs_texture_05_resized_wall.jpg')
+        self.door_img = pyglet.resource.image('door-scaled.png')
+        self.lever_off_img = pyglet.resource.image('lever-off-resized.png')
+        self.lever_on_img = pyglet.resource.image('lever-on-resized.png')
 
         self.padding = 1
         self.tile_dim = self.ground_img.width + self.padding
@@ -77,6 +80,10 @@ class Viewer(object):
         self.terminal_goal_sprites = []
         self.terminal_lava_sprites = []
         self.ground_sprites = []
+        self.lever_sprites = []
+
+        self.wall_indices_to_wall_sprite_index = {}
+        self.lever_indices_to_lever_sprite_index = {}
 
         self.batch = pyglet.graphics.Batch()
         background = pyglet.graphics.OrderedGroup(0)
@@ -118,21 +125,39 @@ class Viewer(object):
         # have to flip pixel location. top-left is initial state = x, y = 0, 0 = state 0
         self.pix_grid_height = (self.env.y_max) * self.tile_dim + (self.num_extra_tiles // 2) * self.tile_dim
 
-        for i, (x, y) in enumerate(self.env.world):
+        for state, (x, y) in enumerate(self.env.world):
             x_pix_loc, y_pix_loc = self.get_x_y_pix_location(x, y)
-            if self.env.is_terminal_goal(i):  # if terminal
+            if self.env.is_terminal_goal(state):  # if terminal
                 self.terminal_goal_sprites.append(
                     pyglet.sprite.Sprite(self.terminal_goal_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
-            elif self.env.is_lava(i):
+            elif self.env.is_lava(state):
                 self.terminal_lava_sprites.append(
-                    pyglet.sprite.Sprite(self.terminal_lava_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch,
-                                         group=background))
-            elif self.env._is_wall(i):
-                self.wall_sprites.append(
-                    pyglet.sprite.Sprite(self.wall_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
+                    pyglet.sprite.Sprite(self.terminal_lava_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
+            elif self.env._is_wall(state):
+                # only if lever is connected to this wall place ground underneath
+                if self.env.levers and state in list(self.env.levers.values()):
+                    # Place ground underneath door sprite for when door is removed
+                    self.ground_sprites.append(
+                        pyglet.sprite.Sprite(self.ground_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch,
+                                             group=background))
+
+                    self.wall_sprites.append(pyglet.sprite.Sprite(self.door_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch,
+                                             group=background))
+                else:
+                    # No door, place normal wall
+                    self.wall_sprites.append(
+                        pyglet.sprite.Sprite(self.wall_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
+
+                # Must collect each index. Not the best solution.
+                self.wall_indices_to_wall_sprite_index[state] = len(self.wall_indices_to_wall_sprite_index.keys())
             else:
                 self.ground_sprites.append(
                     pyglet.sprite.Sprite(self.ground_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=background))
+
+            if self.env.levers:
+                if state in self.env.levers.keys():
+                    self.lever_sprites.append(pyglet.sprite.Sprite(self.lever_off_img, x=x_pix_loc, y=y_pix_loc, batch=self.batch, group=foreground))
+                    self.lever_indices_to_lever_sprite_index[state] = len(self.lever_indices_to_lever_sprite_index.keys())
 
         glViewport(0, 0, width, height)
 
